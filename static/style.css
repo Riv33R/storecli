@@ -1,0 +1,931 @@
+/* ============================================================
+   StorCLI RAID Monitor — Стили дашборда
+   ============================================================
+   Цветовая палитра: тёмная тема с акцентами на статусах.
+   Используется Inter (Google Fonts) для современной типографики.
+   ============================================================ */
+
+/* ── Google Fonts ─────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── CSS Custom Properties (Design Tokens) ───────────── */
+:root {
+    /* Базовые цвета */
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-card: #1a2035;
+    --bg-card-hover: #1f2847;
+    --bg-table-row: #151c30;
+    --bg-table-row-alt: #1a2240;
+
+    /* Текст */
+    --text-primary: #e8ecf4;
+    --text-secondary: #8b95a8;
+    --text-muted: #5a6478;
+
+    /* Бордеры */
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-accent: rgba(99, 131, 255, 0.2);
+
+    /* Статусные цвета */
+    --status-optimal: #10b981;
+    --status-optimal-bg: rgba(16, 185, 129, 0.1);
+    --status-optimal-border: rgba(16, 185, 129, 0.3);
+
+    --status-degraded: #f59e0b;
+    --status-degraded-bg: rgba(245, 158, 11, 0.1);
+    --status-degraded-border: rgba(245, 158, 11, 0.3);
+
+    --status-critical: #ef4444;
+    --status-critical-bg: rgba(239, 68, 68, 0.1);
+    --status-critical-border: rgba(239, 68, 68, 0.3);
+
+    --status-unknown: #6b7280;
+    --status-unknown-bg: rgba(107, 114, 128, 0.1);
+    --status-unknown-border: rgba(107, 114, 128, 0.3);
+
+    /* Акцентные цвета */
+    --accent-blue: #6383ff;
+    --accent-blue-hover: #7c99ff;
+    --accent-purple: #a78bfa;
+    --accent-cyan: #22d3ee;
+
+    /* Градиенты */
+    --gradient-header: linear-gradient(135deg, #6383ff 0%, #a78bfa 50%, #22d3ee 100%);
+    --gradient-card-border: linear-gradient(135deg, rgba(99,131,255,0.3), rgba(167,139,250,0.1), rgba(34,211,238,0.3));
+
+    /* Тени */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(99, 131, 255, 0.15);
+
+    /* Радиусы */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    /* Переходы */
+    --transition-fast: 150ms ease;
+    --transition-base: 250ms ease;
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Reset & Base ────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 15px;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+
+    /* Едва заметный паттерн фона */
+    background-image:
+        radial-gradient(ellipse at 15% 15%, rgba(99, 131, 255, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 85%, rgba(167, 139, 250, 0.03) 0%, transparent 50%);
+}
+
+/* ── Layout ──────────────────────────────────────────── */
+.app-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 32px 64px;
+}
+
+/* ── Header ──────────────────────────────────────────── */
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-bottom: 28px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--gradient-header);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: var(--shadow-glow);
+}
+
+.app-title {
+    font-size: 1.65rem;
+    font-weight: 700;
+    background: var(--gradient-header);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+}
+
+.app-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ── Overall Status Badge ────────────────────────────── */
+.overall-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all var(--transition-base);
+    border: 1px solid;
+}
+
+.overall-badge.optimal {
+    color: var(--status-optimal);
+    background: var(--status-optimal-bg);
+    border-color: var(--status-optimal-border);
+}
+
+.overall-badge.degraded {
+    color: var(--status-degraded);
+    background: var(--status-degraded-bg);
+    border-color: var(--status-degraded-border);
+    animation: pulse-warn 2s infinite;
+}
+
+.overall-badge.critical {
+    color: var(--status-critical);
+    background: var(--status-critical-bg);
+    border-color: var(--status-critical-border);
+    animation: pulse-critical 1.2s infinite;
+}
+
+.overall-badge .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* ── Host Selector (панель переключения серверов) ──── */
+.host-selector {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 14px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+.host-selector-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.host-selector-icon {
+    font-size: 1.1rem;
+}
+
+.host-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-accent) transparent;
+    flex: 1;
+    padding: 2px 0;
+}
+
+.host-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.host-tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.host-tabs::-webkit-scrollbar-thumb {
+    background: var(--border-accent);
+    border-radius: 4px;
+}
+
+.host-tab {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.host-tab:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-accent);
+    color: var(--text-primary);
+}
+
+.host-tab.active {
+    background: rgba(99, 131, 255, 0.08);
+    border-color: var(--accent-blue);
+    color: var(--text-primary);
+    box-shadow: 0 0 12px rgba(99, 131, 255, 0.1);
+}
+
+.host-tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.host-tab-name {
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+.host-tab-address {
+    font-size: 0.68rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+}
+
+.host-tab.active .host-tab-address {
+    color: var(--text-secondary);
+}
+
+/* Индикатор статуса на табе хоста */
+.host-tab-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+    transition: background var(--transition-base), box-shadow var(--transition-base);
+}
+
+.host-tab-indicator.optimal {
+    background: var(--status-optimal);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+}
+
+.host-tab-indicator.degraded {
+    background: var(--status-degraded);
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+    animation: pulse-indicator 2s infinite;
+}
+
+.host-tab-indicator.critical {
+    background: var(--status-critical);
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+    animation: pulse-indicator 1s infinite;
+}
+
+@keyframes pulse-indicator {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+}
+
+/* ── Host Info Banner ─────────────────────────────────── */
+.host-info-banner {
+    padding: 12px 20px;
+    margin-bottom: 24px;
+    background: rgba(99, 131, 255, 0.05);
+    border: 1px solid var(--border-accent);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.host-info-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--accent-blue);
+}
+
+.host-info-detail {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Кнопки ──────────────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border: 1px solid var(--border-accent);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    white-space: nowrap;
+}
+
+.btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-blue);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    border-color: transparent;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--accent-blue-hover), #b49bff);
+    border-color: transparent;
+    box-shadow: 0 0 24px rgba(99, 131, 255, 0.3);
+}
+
+.btn .icon {
+    font-size: 1.1em;
+    transition: transform var(--transition-base);
+}
+
+.btn:hover .icon {
+    transform: rotate(45deg);
+}
+
+.btn.loading .icon {
+    animation: spin 1s linear infinite;
+}
+
+/* ── Cards Grid ──────────────────────────────────────── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    position: relative;
+    padding: 20px 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-header);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.stat-card:hover {
+    border-color: var(--border-accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-value.small {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* ── Section (панели-карточки с таблицами) ────────────── */
+.section {
+    margin-bottom: 28px;
+}
+
+.section-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color var(--transition-base);
+}
+
+.section-card:hover {
+    border-color: var(--border-accent);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition-fast);
+}
+
+.section-header:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-icon {
+    font-size: 1.2rem;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.section-count {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    padding: 3px 10px;
+    border-radius: 100px;
+}
+
+.section-toggle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    transition: transform var(--transition-base);
+}
+
+.section-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
+.section-body {
+    overflow: hidden;
+    transition: max-height var(--transition-slow), opacity var(--transition-base);
+}
+
+.section-body.collapsed {
+    max-height: 0 !important;
+    opacity: 0;
+}
+
+/* ── Таблицы ─────────────────────────────────────────── */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.data-table thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background var(--transition-fast);
+}
+
+.data-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.data-table tbody tr:hover {
+    background: rgba(99, 131, 255, 0.04);
+}
+
+.data-table tbody td {
+    padding: 11px 16px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+/* ── Строки таблицы с разными статусами ──────────────── */
+.data-table tbody tr.row-degraded {
+    background: var(--status-degraded-bg) !important;
+    border-left: 3px solid var(--status-degraded);
+}
+
+.data-table tbody tr.row-critical {
+    background: var(--status-critical-bg) !important;
+    border-left: 3px solid var(--status-critical);
+    animation: pulse-row-critical 2s infinite;
+}
+
+/* ── Status Badge (внутри таблицы) ───────────────────── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+.status-badge.optimal {
+    color: var(--status-optimal);
+    background: var(--status-optimal-bg);
+    border-color: var(--status-optimal-border);
+}
+
+.status-badge.degraded {
+    color: var(--status-degraded);
+    background: var(--status-degraded-bg);
+    border-color: var(--status-degraded-border);
+}
+
+.status-badge.critical {
+    color: var(--status-critical);
+    background: var(--status-critical-bg);
+    border-color: var(--status-critical-border);
+}
+
+.status-badge.unknown {
+    color: var(--status-unknown);
+    background: var(--status-unknown-bg);
+    border-color: var(--status-unknown-border);
+}
+
+.status-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* ── Loader ──────────────────────────────────────────── */
+.loader-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 14, 26, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.loader-overlay.active {
+    display: flex;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.loader-spinner {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--accent-blue);
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+}
+
+.loader-text {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.loader-subtext {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+/* ── Сообщение об ошибке ─────────────────────────────── */
+.error-banner {
+    display: none;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    background: var(--status-critical-bg);
+    border: 1px solid var(--status-critical-border);
+    border-radius: var(--radius-md);
+    color: var(--status-critical);
+}
+
+.error-banner.visible {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.error-banner .error-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.error-banner .error-body {
+    flex: 1;
+}
+
+.error-banner .error-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.error-banner .error-message {
+    font-size: 0.82rem;
+    color: rgba(239, 68, 68, 0.8);
+    line-height: 1.5;
+}
+
+/* ── Timestamp footer ────────────────────────────────── */
+.footer-info {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* ── Controller Block (блок одного контроллера) ──────── */
+.controller-block {
+    margin-bottom: 36px;
+    padding-bottom: 4px;
+}
+
+.controller-block + .controller-block {
+    border-top: 2px solid var(--border-accent);
+    padding-top: 32px;
+}
+
+.controller-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px;
+    margin-bottom: 20px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    transition: border-color var(--transition-base);
+}
+
+.controller-header.optimal {
+    border-left: 4px solid var(--status-optimal);
+}
+
+.controller-header.degraded {
+    border-left: 4px solid var(--status-degraded);
+    background: rgba(245, 158, 11, 0.03);
+}
+
+.controller-header.critical {
+    border-left: 4px solid var(--status-critical);
+    background: rgba(239, 68, 68, 0.03);
+}
+
+.controller-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.controller-index {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--gradient-header);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+}
+
+.controller-model {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.controller-serial {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+}
+
+.controller-header-right {
+    flex-shrink: 0;
+}
+
+.controller-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    background: var(--status-critical-bg);
+    border: 1px solid var(--status-critical-border);
+    border-radius: var(--radius-md);
+    color: var(--status-critical);
+    font-size: 0.85rem;
+}
+
+/* ── Animations ──────────────────────────────────────── */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+@keyframes pulse-warn {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2); }
+    50%      { box-shadow: 0 0 12px 4px rgba(245, 158, 11, 0.15); }
+}
+
+@keyframes pulse-critical {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+    50%      { box-shadow: 0 0 16px 6px rgba(239, 68, 68, 0.2); }
+}
+
+@keyframes pulse-row-critical {
+    0%, 100% { background: var(--status-critical-bg); }
+    50%      { background: rgba(239, 68, 68, 0.16); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeInUp 0.4s ease forwards;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+    .app-container {
+        padding: 16px 16px 48px;
+    }
+
+    .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .host-selector {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .host-tabs {
+        width: 100%;
+    }
+
+    .host-info-banner {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .data-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .section-header {
+        padding: 14px 16px;
+    }
+
+    .data-table thead th,
+    .data-table tbody td {
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

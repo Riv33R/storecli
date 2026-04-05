@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StorCLI RAID Monitor — мониторинг состояния RAID-массивов в реальном времени">
+    <title>StorCLI RAID Monitor</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+
+    <!-- ── Loader Overlay ──────────────────────── -->
+    <div id="loader" class="loader-overlay">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text">Подключение к серверу по SSH…</div>
+            <div class="loader-subtext">Выполняется команда storcli</div>
+        </div>
+    </div>
+
+    <!-- ── Main Container ──────────────────────── -->
+    <div class="app-container">
+
+        <!-- ── Header ──────────────────────────── -->
+        <header class="app-header" id="app-header">
+            <div class="header-left">
+                <div class="header-icon">🛡️</div>
+                <div>
+                    <h1 class="app-title">RAID Monitor</h1>
+                    <p class="app-subtitle">StorCLI Dashboard</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div id="overall-status" class="overall-badge" style="display:none;">
+                    <span class="dot"></span>
+                    <span id="overall-status-text">—</span>
+                </div>
+                <button id="btn-refresh" class="btn btn-primary" onclick="refreshCurrentHost()">
+                    <span class="icon">⟳</span>
+                    Обновить данные
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Host Selector ───────────────────── -->
+        <div id="host-selector" class="host-selector">
+            <div class="host-selector-label">
+                <span class="host-selector-icon">🖥️</span>
+                <span>Серверы</span>
+            </div>
+            <div id="host-tabs" class="host-tabs"></div>
+        </div>
+
+        <!-- ── Error Banner ────────────────────── -->
+        <div id="error-banner" class="error-banner">
+            <span class="error-icon">⚠️</span>
+            <div class="error-body">
+                <div class="error-title" id="error-title">Ошибка</div>
+                <div class="error-message" id="error-message"></div>
+            </div>
+        </div>
+
+        <!-- ── Host Info Banner ────────────────── -->
+        <div id="host-info" class="host-info-banner" style="display:none;">
+            <div class="host-info-name" id="host-info-name"></div>
+            <div class="host-info-detail" id="host-info-detail"></div>
+        </div>
+
+        <!-- ══ Динамический контент ═══════════════
+             Всё ниже генерируется через JS:
+             - Карточки контроллеров
+             - Таблицы VD / PD / Topology / BBU
+             для КАЖДОГО контроллера на хосте
+        ═══════════════════════════════════════════ -->
+        <div id="controllers-container"></div>
+
+        <!-- ── Footer ──────────────────────────── -->
+        <div id="footer-info" class="footer-info" style="display:none;">
+            <span>Последнее обновление: <span id="last-update">—</span></span>
+            <span>StorCLI RAID Monitor v2.0</span>
+        </div>
+
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

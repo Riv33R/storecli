@@ -1,0 +1,38 @@
+[
+    {
+        "id": "server-1",
+        "name": "srv-vm-2.dnestrschool1.online",
+        "description": "",
+        "ssh": {
+            "host": "srv-vm-2.dnestrschool1.online",
+            "port": 22,
+            "user": "root",
+            "auth_method": "password",
+            "key_path": "/root/.ssh/id_rsa",
+            "password": "Esxi2023+",
+            "key_passphrase": ""
+        },
+        "storcli": {
+            "path": "/opt/lsi/storcli/storcli",
+            "controller": "/call"
+        }
+    },
+    {
+        "id": "server-2",
+        "name": "srv-vm-3.dnestrschool1.online",
+        "description": "",
+        "ssh": {
+            "host": "srv-vm-3.dnestrschool1.online",
+            "port": 22,
+            "user": "root",
+            "auth_method": "password",
+            "key_path": "/root/.ssh/id_rsa",
+            "password": "Esxi2023+",
+            "key_passphrase": ""
+        },
+        "storcli": {
+            "path": "/opt/lsi/storcli/storcli",
+            "controller": "/call"
+        }
+    }
+]
