@@ -12,8 +12,9 @@ venv/
 .venv/
 env/
 
-# Environment variables
+# Environment variables & secrets
 .env
+hosts.json
 
 # IDE
 .vscode/

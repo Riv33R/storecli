@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="StorCLI RAID Monitor — мониторинг состояния RAID-массивов в реальном времени">
+    <meta name="description" content="StorCLI RAID Monitor — мониторинг и управление RAID-массивами">
     <title>StorCLI RAID Monitor</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 <body>
 
-    <!-- ── Loader Overlay ──────────────────────── -->
+    <!-- ── Loader ──────────────────────────────── -->
     <div id="loader" class="loader-overlay">
         <div class="loader-content">
             <div class="loader-spinner"></div>
@@ -19,10 +19,132 @@
         </div>
     </div>
 
+    <!-- ── Modal: Управление хостами ───────────── -->
+    <div id="host-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">Добавить сервер</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="host-form" onsubmit="return saveHost(event)">
+                <input type="hidden" id="form-host-id" value="">
+                <input type="hidden" id="form-mode" value="create">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label for="form-name">Название сервера *</label>
+                        <input type="text" id="form-name" placeholder="Например: Основной сервер" required>
+                    </div>
+                    <div class="form-group full">
+                        <label for="form-description">Описание</label>
+                        <input type="text" id="form-description" placeholder="ServeRAID M5014, Production">
+                    </div>
+                    <div class="form-divider">SSH-подключение</div>
+                    <div class="form-group">
+                        <label for="form-ssh-host">Хост / IP *</label>
+                        <input type="text" id="form-ssh-host" placeholder="192.168.1.100" required>
+                    </div>
+                    <div class="form-group small">
+                        <label for="form-ssh-port">Порт</label>
+                        <input type="number" id="form-ssh-port" value="22" min="1" max="65535">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-ssh-user">Пользователь</label>
+                        <input type="text" id="form-ssh-user" value="root" placeholder="root">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-ssh-auth">Метод авторизации</label>
+                        <select id="form-ssh-auth" onchange="toggleAuthFields()">
+                            <option value="password">Пароль</option>
+                            <option value="key">SSH-ключ</option>
+                        </select>
+                    </div>
+                    <div id="auth-password-fields">
+                        <div class="form-group full">
+                            <label for="form-ssh-password">Пароль SSH</label>
+                            <input type="password" id="form-ssh-password" placeholder="••••••••" autocomplete="new-password">
+                            <div class="form-hint" id="password-hint" style="display:none;">Оставьте пустым, чтобы сохранить текущий</div>
+                        </div>
+                    </div>
+                    <div id="auth-key-fields" style="display:none;">
+                        <div class="form-group full">
+                            <label for="form-ssh-key">Путь к SSH-ключу</label>
+                            <input type="text" id="form-ssh-key" placeholder="/root/.ssh/id_rsa">
+                        </div>
+                        <div class="form-group full">
+                            <label for="form-ssh-passphrase">Пароль ключа</label>
+                            <input type="password" id="form-ssh-passphrase" placeholder="••••••••" autocomplete="new-password">
+                        </div>
+                    </div>
+                    <div class="form-divider">StorCLI</div>
+                    <div class="form-group">
+                        <label for="form-storcli-path">Путь к storcli</label>
+                        <input type="text" id="form-storcli-path" value="/opt/lsi/storcli/storcli">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-storcli-ctrl">Контроллер</label>
+                        <select id="form-storcli-ctrl">
+                            <option value="/call" selected>/call (все)</option>
+                            <option value="/c0">/c0</option>
+                            <option value="/c1">/c1</option>
+                            <option value="/c2">/c2</option>
+                            <option value="/c3">/c3</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary" id="form-submit-btn">
+                        <span class="icon" style="transform:none !important;">+</span> Добавить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Modal: Подтверждение действия ────────── -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2 class="modal-title">⚠️ Подтверждение</h2>
+                <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <p class="confirm-text" id="confirm-text"></p>
+                <div class="confirm-meta">
+                    <span class="confirm-host" id="confirm-host"></span>
+                    <span class="confirm-action" id="confirm-action"></span>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" onclick="closeConfirmModal()">Отмена</button>
+                <button type="button" class="btn btn-warning" id="confirm-execute-btn" onclick="executeConfirmedAction()">
+                    Выполнить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Modal: Результат выполнения ─────────── -->
+    <div id="result-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="result-title">Результат</h2>
+                <button class="modal-close" onclick="closeResultModal()">&times;</button>
+            </div>
+            <div class="result-body">
+                <div class="result-status" id="result-status"></div>
+                <div class="result-meta" id="result-meta"></div>
+                <pre class="result-output" id="result-output"></pre>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" onclick="closeResultModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ── Main Container ──────────────────────── -->
     <div class="app-container">
 
-        <!-- ── Header ──────────────────────────── -->
         <header class="app-header" id="app-header">
             <div class="header-left">
                 <div class="header-icon">🛡️</div>
@@ -37,22 +159,21 @@
                     <span id="overall-status-text">—</span>
                 </div>
                 <button id="btn-refresh" class="btn btn-primary" onclick="refreshCurrentHost()">
-                    <span class="icon">⟳</span>
-                    Обновить данные
+                    <span class="icon">⟳</span> Обновить
+                </button>
+                <button class="btn" onclick="openAddHostModal()" title="Добавить сервер">
+                    <span class="icon" style="transform:none !important;">+</span> Добавить
                 </button>
             </div>
         </header>
 
-        <!-- ── Host Selector ───────────────────── -->
         <div id="host-selector" class="host-selector">
             <div class="host-selector-label">
-                <span class="host-selector-icon">🖥️</span>
-                <span>Серверы</span>
+                <span class="host-selector-icon">🖥️</span><span>Серверы</span>
             </div>
             <div id="host-tabs" class="host-tabs"></div>
         </div>
 
-        <!-- ── Error Banner ────────────────────── -->
         <div id="error-banner" class="error-banner">
             <span class="error-icon">⚠️</span>
             <div class="error-body">
@@ -61,26 +182,23 @@
             </div>
         </div>
 
-        <!-- ── Host Info Banner ────────────────── -->
         <div id="host-info" class="host-info-banner" style="display:none;">
-            <div class="host-info-name" id="host-info-name"></div>
-            <div class="host-info-detail" id="host-info-detail"></div>
+            <div class="host-info-left">
+                <div class="host-info-name" id="host-info-name"></div>
+                <div class="host-info-detail" id="host-info-detail"></div>
+            </div>
+            <div class="host-info-actions">
+                <button class="btn-icon" onclick="openEditHostModal(activeHostId)" title="Редактировать">✏️</button>
+                <button class="btn-icon btn-icon-danger" onclick="confirmDeleteHost(activeHostId)" title="Удалить">🗑️</button>
+            </div>
         </div>
 
-        <!-- ══ Динамический контент ═══════════════
-             Всё ниже генерируется через JS:
-             - Карточки контроллеров
-             - Таблицы VD / PD / Topology / BBU
-             для КАЖДОГО контроллера на хосте
-        ═══════════════════════════════════════════ -->
         <div id="controllers-container"></div>
 
-        <!-- ── Footer ──────────────────────────── -->
         <div id="footer-info" class="footer-info" style="display:none;">
             <span>Последнее обновление: <span id="last-update">—</span></span>
-            <span>StorCLI RAID Monitor v2.0</span>
+            <span>StorCLI RAID Monitor v2.2</span>
         </div>
-
     </div>
 
     <script src="/static/app.js"></script>

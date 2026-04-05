@@ -52,7 +52,7 @@
 
     /* Градиенты */
     --gradient-header: linear-gradient(135deg, #6383ff 0%, #a78bfa 50%, #22d3ee 100%);
-    --gradient-card-border: linear-gradient(135deg, rgba(99,131,255,0.3), rgba(167,139,250,0.1), rgba(34,211,238,0.3));
+    --gradient-card-border: linear-gradient(135deg, rgba(99, 131, 255, 0.3), rgba(167, 139, 250, 0.1), rgba(34, 211, 238, 0.3));
 
     /* Тени */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -333,8 +333,15 @@ body {
 }
 
 @keyframes pulse-indicator {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.4; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
 }
 
 /* ── Host Info Banner ─────────────────────────────────── */
@@ -755,7 +762,7 @@ body {
     padding-bottom: 4px;
 }
 
-.controller-block + .controller-block {
+.controller-block+.controller-block {
     border-top: 2px solid var(--border-accent);
     padding-top: 32px;
 }
@@ -837,25 +844,230 @@ body {
     font-size: 0.85rem;
 }
 
+/* ── Controller Actions Bar ──────────────────────────── */
+.ctrl-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+/* ── Action Buttons ──────────────────────────────────── */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    white-space: nowrap;
+}
+
+.action-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-accent);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
+.action-btn-warn {
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.action-btn-warn:hover {
+    border-color: var(--status-degraded);
+    background: var(--status-degraded-bg);
+    color: var(--status-degraded);
+}
+
+/* Small action buttons (inside table cells) */
+.action-btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+}
+
+.action-btn-sm:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-accent);
+    transform: scale(1.1);
+}
+
+.action-btn-sm.action-btn-warn:hover {
+    border-color: var(--status-degraded);
+    background: var(--status-degraded-bg);
+}
+
+.action-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+}
+
+.actions-cell {
+    white-space: nowrap !important;
+}
+
+/* ── Warning Button ──────────────────────────────────── */
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: transparent;
+    color: #fff;
+    font-weight: 600;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border-color: transparent;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+/* ── Confirm Modal ───────────────────────────────────── */
+.modal-sm {
+    max-width: 480px;
+}
+
+.confirm-body {
+    padding: 24px 28px;
+}
+
+.confirm-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.confirm-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Result Modal ────────────────────────────────────── */
+.result-body {
+    padding: 24px 28px;
+}
+
+.result-status {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+}
+
+.result-success {
+    color: var(--status-optimal);
+    background: var(--status-optimal-bg);
+    border: 1px solid var(--status-optimal-border);
+}
+
+.result-error {
+    color: var(--status-critical);
+    background: var(--status-critical-bg);
+    border: 1px solid var(--status-critical-border);
+}
+
+.result-meta {
+    margin-bottom: 12px;
+}
+
+.result-meta code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+    word-break: break-all;
+}
+
+.result-output {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    max-height: 400px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 /* ── Animations ──────────────────────────────────────── */
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes pulse-warn {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2); }
-    50%      { box-shadow: 0 0 12px 4px rgba(245, 158, 11, 0.15); }
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 12px 4px rgba(245, 158, 11, 0.15);
+    }
 }
 
 @keyframes pulse-critical {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
-    50%      { box-shadow: 0 0 16px 6px rgba(239, 68, 68, 0.2); }
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 16px 6px rgba(239, 68, 68, 0.2);
+    }
 }
 
 @keyframes pulse-row-critical {
-    0%, 100% { background: var(--status-critical-bg); }
-    50%      { background: rgba(239, 68, 68, 0.16); }
+
+    0%,
+    100% {
+        background: var(--status-critical-bg);
+    }
+
+    50% {
+        background: rgba(239, 68, 68, 0.16);
+    }
 }
 
 @keyframes fadeInUp {
@@ -863,6 +1075,7 @@ body {
         opacity: 0;
         transform: translateY(12px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -927,5 +1140,265 @@ body {
 @media (max-width: 480px) {
     .stats-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ── Host Info Banner (с кнопками действий) ──────────── */
+.host-info-banner {
+    padding: 12px 20px;
+    margin-bottom: 24px;
+    background: rgba(99, 131, 255, 0.05);
+    border: 1px solid var(--border-accent);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.host-info-left {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.host-info-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--accent-blue);
+}
+
+.host-info-detail {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.host-info-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all var(--transition-base);
+}
+
+.btn-icon:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-accent);
+    transform: translateY(-1px);
+}
+
+.btn-icon-danger:hover {
+    border-color: var(--status-critical-border);
+    background: var(--status-critical-bg);
+}
+
+/* ── Modal Overlay ───────────────────────────────────── */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 14, 26, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 620px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg), 0 0 60px rgba(99, 131, 255, 0.08);
+    animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: var(--gradient-header);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+/* ── Form ────────────────────────────────────────────── */
+#host-form {
+    padding: 24px 28px 28px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+.form-group.small {
+    max-width: 140px;
+}
+
+.form-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    transition: border-color var(--transition-base), box-shadow var(--transition-base);
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(99, 131, 255, 0.15);
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+}
+
+.form-group select {
+    cursor: pointer;
+    appearance: auto;
+}
+
+.form-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.form-divider {
+    grid-column: 1 / -1;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 12px 0 4px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 4px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ── Responsive: Modal ───────────────────────────────── */
+@media (max-width: 640px) {
+    .modal-content {
+        max-width: 100%;
+        border-radius: var(--radius-lg);
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.small {
+        max-width: none;
+    }
+
+    #host-form {
+        padding: 16px 20px 24px;
+    }
+
+    .modal-header {
+        padding: 16px 20px 14px;
+    }
+
+    .host-info-banner {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
