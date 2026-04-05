@@ -15,14 +15,15 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-# Загружаем переменные окружения из .env файла
-load_dotenv()
-
 logger = logging.getLogger(__name__)
 
 # Путь к корню проекта (рядом с app/)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 HOSTS_FILE = PROJECT_ROOT / "hosts.json"
+
+# Загружаем переменные окружения из .env файла
+env_path = PROJECT_ROOT / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
 
 
 @dataclass(frozen=True)

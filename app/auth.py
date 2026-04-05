@@ -14,10 +14,13 @@ import logging
 import os
 import secrets
 import time
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+# Явно загружаем .env из корня проекта
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
 
 logger = logging.getLogger(__name__)
 
