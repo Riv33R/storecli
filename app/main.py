@@ -2,6 +2,7 @@
 main.py — Точка входа FastAPI-приложения для мониторинга RAID.
 
 Предоставляет REST API для:
+  - Аутентификации (cookie-сессии)
   - Получения статуса RAID-массива с удалённых серверов (SSH + StorCLI)
   - CRUD-управления конфигурацией хостов (hosts.json)
   - Выполнения команд управления (Locate, Rebuild, Hot Spare и т.д.)
@@ -13,9 +14,15 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.auth import (
+    create_session_token,
+    is_public_path,
+    validate_session_token,
+    verify_credentials,
+)
 from app.commands import build_command, get_all_actions, get_command
 from app.config import (
     add_host,
@@ -45,13 +52,95 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="StorCLI RAID Monitor",
     description="Веб-приложение для мониторинга и управления RAID-массивами",
-    version="2.2.0",
+    version="2.3.0",
 )
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+# ───────────────────────────────────────────────────────────
+# Middleware: Проверка авторизации
+# ───────────────────────────────────────────────────────────
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    """Проверяет cookie-сессию на каждый запрос."""
+    path = request.url.path
+
+    # Публичные пути — пропускаем
+    if is_public_path(path):
+        return await call_next(request)
+
+    # Проверяем cookie
+    session_token = request.cookies.get("session")
+    username = validate_session_token(session_token)
+
+    if username is None:
+        # API-запросы → 401 JSON
+        if path.startswith("/api/"):
+            return JSONResponse(
+                status_code=401,
+                content={"error": "UNAUTHORIZED", "message": "Требуется авторизация"},
+            )
+        # Страницы → редирект на логин
+        return RedirectResponse(url="/login", status_code=302)
+
+    # Сохраняем username в state для использования в обработчиках
+    request.state.username = username
+    return await call_next(request)
+
+
+# ───────────────────────────────────────────────────────────
+# Авторизация
+# ───────────────────────────────────────────────────────────
+@app.get("/login", response_class=FileResponse)
+async def login_page():
+    """Отдаёт страницу входа."""
+    return FileResponse(str(STATIC_DIR / "login.html"))
+
+
+@app.post("/api/login")
+async def login(request: Request):
+    """Аутентификация: проверяет логин/пароль и устанавливает cookie."""
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail={"error": "INVALID_JSON", "message": "Невалидный JSON"})
+
+    username = body.get("username", "").strip()
+    password = body.get("password", "")
+
+    if not verify_credentials(username, password):
+        logger.warning("Неудачная попытка входа: user='%s', ip=%s", username, request.client.host)
+        raise HTTPException(
+            status_code=401,
+            detail={"error": "INVALID_CREDENTIALS", "message": "Неверный логин или пароль"},
+        )
+
+    # Создаём сессию
+    token = create_session_token(username)
+    logger.info("Успешный вход: user='%s', ip=%s", username, request.client.host)
+
+    response = JSONResponse(content={"success": True, "message": "Авторизация успешна"})
+    response.set_cookie(
+        key="session",
+        value=token,
+        httponly=True,       # Недоступна из JS
+        samesite="strict",   # Защита от CSRF
+        max_age=86400,       # 24 часа
+        path="/",
+    )
+    return response
+
+
+@app.post("/api/logout")
+async def logout():
+    """Выход: удаляет cookie сессии."""
+    response = JSONResponse(content={"success": True, "message": "Выход выполнен"})
+    response.delete_cookie(key="session", path="/")
+    return response
 
 
 # ───────────────────────────────────────────────────────────
@@ -199,27 +288,17 @@ async def get_raid_status_default():
 
 
 # ───────────────────────────────────────────────────────────
-# Действия: реестр и выполнение
+# Действия
 # ───────────────────────────────────────────────────────────
 @app.get("/api/actions")
 async def list_actions():
-    """Список всех доступных действий, сгруппированных по target."""
+    """Список всех доступных действий."""
     return JSONResponse(content={"success": True, "actions": get_all_actions()})
 
 
 @app.post("/api/action/{host_id}")
 async def execute_action(host_id: str, request: Request):
-    """
-    Выполняет storcli-команду на удалённом сервере.
-
-    Body JSON:
-        action: str — ID действия из COMMAND_REGISTRY
-        controller_index: int — индекс контроллера
-        eid: str — Enclosure ID (для PD)
-        slot: str — Slot (для PD)
-        vd_index: int — индекс VD (для VD-действий)
-        dg: int — Drive Group (для dedicated hot spare)
-    """
+    """Выполняет storcli-команду на удалённом сервере."""
     app_config = get_app_config()
 
     host = get_host_by_id(host_id)
@@ -236,7 +315,6 @@ async def execute_action(host_id: str, request: Request):
     if cmd_info is None:
         raise HTTPException(status_code=400, detail={"error": "UNKNOWN_ACTION", "message": f"Неизвестное действие: '{action}'"})
 
-    # Проверяем уровень (пока допускаем safe + operational)
     if cmd_info["level"] not in ("safe", "operational"):
         raise HTTPException(status_code=403, detail={"error": "FORBIDDEN", "message": "Действие запрещено"})
 
@@ -255,59 +333,39 @@ async def execute_action(host_id: str, request: Request):
 
     timestamp = datetime.now(tz=timezone.utc).isoformat()
 
-    # Аудит-лог
+    # Аудит (включая username)
+    username = getattr(request.state, "username", "unknown")
     logger.info(
-        "ACTION [%s] host=%s ctrl=C%s target=%s cmd='%s'",
-        action,
-        host_id,
-        payload.get("controller_index", 0),
-        cmd_info["target"],
-        command,
+        "ACTION [%s] user=%s host=%s ctrl=C%s cmd='%s'",
+        action, username, host_id,
+        payload.get("controller_index", 0), command,
     )
 
-    # ── DEBUG MODE: mock-ответ ──
     if app_config.debug_mode:
-        logger.info("DEBUG_MODE: mock execute '%s'", action)
         return JSONResponse(content={
             "success": True,
             "result": {
-                "action": action,
-                "label": cmd_info["label"],
-                "command": command,
+                "action": action, "label": cmd_info["label"], "command": command,
                 "output": f"[DEBUG MODE] Команда не выполнена.\nКоманда: {command}",
-                "timestamp": timestamp,
-                "debug": True,
+                "timestamp": timestamp, "debug": True,
             },
         })
 
-    # ── Выполняем команду по SSH ──
     try:
         output = execute_remote_command(host.ssh, command)
-
-        logger.info("ACTION SUCCESS [%s] host=%s", action, host_id)
+        logger.info("ACTION SUCCESS [%s] user=%s host=%s", action, username, host_id)
         return JSONResponse(content={
             "success": True,
             "result": {
-                "action": action,
-                "label": cmd_info["label"],
-                "command": command,
-                "output": output,
-                "timestamp": timestamp,
-                "debug": False,
+                "action": action, "label": cmd_info["label"], "command": command,
+                "output": output, "timestamp": timestamp, "debug": False,
             },
         })
-
     except SSHConnectionError as exc:
         raise HTTPException(status_code=503, detail={"error": "SSH_CONNECTION_ERROR", "message": str(exc)})
     except SSHCommandError as exc:
-        # storcli может вернуть non-zero exit code, но это не всегда ошибка
-        logger.warning("ACTION COMMAND_ERROR [%s] host=%s: %s", action, host_id, exc)
-        raise HTTPException(status_code=502, detail={
-            "error": "COMMAND_ERROR",
-            "message": str(exc),
-            "action": action,
-            "label": cmd_info["label"],
-        })
+        logger.warning("ACTION ERROR [%s] user=%s: %s", action, username, exc)
+        raise HTTPException(status_code=502, detail={"error": "COMMAND_ERROR", "message": str(exc), "action": action, "label": cmd_info["label"]})
     except Exception as exc:
         logger.exception("ACTION UNEXPECTED [%s]: %s", action, exc)
         raise HTTPException(status_code=500, detail={"error": "INTERNAL_ERROR", "message": str(exc)})

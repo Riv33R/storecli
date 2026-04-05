@@ -6,10 +6,10 @@
         "ssh": {
             "host": "srv-vm-2.dnestrschool1.online",
             "port": 22,
-            "user": "",
+            "user": "root",
             "auth_method": "password",
             "key_path": "/root/.ssh/id_rsa",
-            "password": "",
+            "password": "Esxi2023+",
             "key_passphrase": ""
         },
         "storcli": {
@@ -24,10 +24,10 @@
         "ssh": {
             "host": "srv-vm-3.dnestrschool1.online",
             "port": 22,
-            "user": "",
+            "user": "root",
             "auth_method": "password",
             "key_path": "/root/.ssh/id_rsa",
-            "password": "",
+            "password": "Esxi2023+",
             "key_passphrase": ""
         },
         "storcli": {

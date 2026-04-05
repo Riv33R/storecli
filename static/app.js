@@ -93,6 +93,7 @@ function toggleSection(id) {
 async function loadHosts() {
     try {
         const r = await fetch('/api/hosts');
+        if (r.status === 401) { window.location.href = '/login'; return; }
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const res = await r.json();
         if (res.success && res.hosts) {
@@ -160,6 +161,7 @@ async function openEditHostModal(hostId) {
     document.getElementById('form-host-id').value = hostId;
     try {
         const r = await fetch(`/api/hosts/${encodeURIComponent(hostId)}`);
+        if (r.status === 401) { window.location.href = '/login'; return; }
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const res = await r.json();
         const h = res.host, ssh = h.ssh || {}, storcli = h.storcli || {};
@@ -207,6 +209,8 @@ async function saveHost(event) {
         const r = mode === 'edit'
             ? await fetch(`/api/hosts/${encodeURIComponent(hostId)}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
             : await fetch('/api/hosts', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+            
+        if (r.status === 401) { window.location.href = '/login'; return; }
         if (!r.ok) { const e = await r.json(); throw new Error(e.detail?.message || `HTTP ${r.status}`); }
         closeModal();
         await loadHosts();
@@ -221,6 +225,7 @@ async function confirmDeleteHost(hostId) {
     if (!confirm(`Удалить сервер «${h ? h.name : hostId}»?\n\nЭто действие необратимо.`)) return;
     try {
         const r = await fetch(`/api/hosts/${encodeURIComponent(hostId)}`, { method:'DELETE' });
+        if (r.status === 401) { window.location.href = '/login'; return; }
         if (!r.ok) { const e = await r.json(); throw new Error(e.detail?.message || `HTTP ${r.status}`); }
         await loadHosts();
     } catch (e) { showError('Ошибка удаления', e.message); }
@@ -287,6 +292,8 @@ async function executeAction(actionData) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(actionData),
         });
+
+        if (r.status === 401) { window.location.href = '/login'; return; }
 
         const res = await r.json();
 
@@ -487,6 +494,7 @@ async function fetchRaidStatus(hostId) {
     document.getElementById('host-info').style.display = 'none';
     try {
         const r = await fetch(hostId ? `/api/raid-status/${encodeURIComponent(hostId)}` : '/api/raid-status');
+        if (r.status === 401) { window.location.href = '/login'; return; }
         if (!r.ok) {
             let d; try { d = (await r.json()).detail; } catch { d = {}; }
             showError(d?.error||'Ошибка', d?.message||`Код ${r.status}`);
@@ -501,8 +509,18 @@ async function fetchRaidStatus(hostId) {
 }
 
 // ────────────────────────────────────────────────────────
-// Инициализация
+// Инициализация и Auth
 // ────────────────────────────────────────────────────────
+
+async function logout() {
+    try {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/login';
+    } catch {
+        window.location.href = '/login';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     loadHosts();
     // Закрытие модалок
