@@ -315,7 +315,7 @@ async def execute_action(host_id: str, request: Request):
     if cmd_info is None:
         raise HTTPException(status_code=400, detail={"error": "UNKNOWN_ACTION", "message": f"Неизвестное действие: '{action}'"})
 
-    if cmd_info["level"] not in ("safe", "operational"):
+    if cmd_info["level"] not in ("safe", "operational", "dangerous"):
         raise HTTPException(status_code=403, detail={"error": "FORBIDDEN", "message": "Действие запрещено"})
 
     try:
@@ -327,6 +327,7 @@ async def execute_action(host_id: str, request: Request):
             slot=str(payload.get("slot", "")),
             vd_index=payload.get("vd_index"),
             dg=payload.get("dg"),
+            rate=str(payload.get("rate", "")),
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail={"error": "BUILD_ERROR", "message": str(exc)})

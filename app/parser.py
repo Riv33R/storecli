@@ -81,6 +81,8 @@ def parse_storcli_output(raw_json: str) -> dict[str, Any]:
                 "physical_drives": [],
                 "topology": [],
                 "bbu": [],
+                "policies": {},
+                "tasks": {},
                 "overall_status": "critical",
                 "error": str(exc),
             })
@@ -142,6 +144,8 @@ def _parse_single_controller(ctrl: dict, index: int) -> dict[str, Any] | None:
         "physical_drives": _parse_physical_drives(response_data),
         "topology": _parse_topology(response_data),
         "bbu": _parse_bbu_info(response_data),
+        "policies": _parse_policies(response_data),
+        "tasks": _parse_tasks(response_data),
         "overall_status": _determine_overall_status(response_data),
     }
 
@@ -258,6 +262,27 @@ def _parse_bbu_info(data: dict) -> list[dict[str, Any]]:
         result.append(bbu_info)
 
     return result
+
+
+def _parse_policies(data: dict) -> dict[str, str]:
+    """Извлекает Rate-параметры из Policies."""
+    policies_list = data.get("Policies", {}).get("Policies Table", [])
+    result = {}
+    for p in policies_list:
+        key = p.get("Policy", "")
+        if key in ["Rebuild Rate", "PR Rate", "BGI Rate", "Check Consistency Rate", "Reconstruction Rate"]:
+            result[key] = p.get("Current", "Unknown").replace(" %", "%").strip()
+    return result
+
+
+def _parse_tasks(data: dict) -> dict[str, str]:
+    """Извлекает информацию о расписании (Scheduled Tasks)."""
+    tasks = data.get("Scheduled Tasks", {})
+    return {
+        "Next Patrol Read": tasks.get("Next Patrol Read launch", "N/A"),
+        "Next CC": tasks.get("Next Consistency check launch", "N/A"),
+        "Battery Learn": tasks.get("Next Battery Learn", "N/A"),
+    }
 
 
 def _classify_state(state: str) -> str:

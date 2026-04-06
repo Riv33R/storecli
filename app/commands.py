@@ -102,6 +102,14 @@ COMMAND_REGISTRY: dict[str, dict[str, Any]] = {
     },
 
     # ── Controller: безопасные ──
+    "ctrl_show_all": {
+        "label": "Полная информация",
+        "icon": "ℹ️",
+        "target": "controller",
+        "level": "safe",
+        "confirm_text": None,
+        "template": "{path} /c{ctrl} show all J",
+    },
     "ctrl_event_log": {
         "label": "Event Log",
         "icon": "📋",
@@ -110,8 +118,32 @@ COMMAND_REGISTRY: dict[str, dict[str, Any]] = {
         "confirm_text": None,
         "template": "{path} /c{ctrl} show events type=latest=20 J",
     },
+    "ctrl_foreign_scan": {
+        "label": "Сканировать Foreign",
+        "icon": "🔍",
+        "target": "controller",
+        "level": "safe",
+        "confirm_text": None,
+        "template": "{path} /c{ctrl}/fall show J",
+    },
 
     # ── Controller: операционные ──
+    "ctrl_start_cc": {
+        "label": "Запуск CC (все VD)",
+        "icon": "✅",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Запустить Consistency Check на всех VD контроллера C{ctrl}?",
+        "template": "{path} /c{ctrl} start cc",
+    },
+    "ctrl_stop_cc": {
+        "label": "Остановка CC (все VD)",
+        "icon": "⏹️",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Остановить Consistency Check на всех VD контроллера C{ctrl}?",
+        "template": "{path} /c{ctrl} stop cc",
+    },
     "ctrl_start_patrol": {
         "label": "Старт Patrol Read",
         "icon": "🔍",
@@ -128,6 +160,46 @@ COMMAND_REGISTRY: dict[str, dict[str, Any]] = {
         "confirm_text": "Остановить Patrol Read на контроллере C{ctrl}?",
         "template": "{path} /c{ctrl} stop patrolread",
     },
+    "ctrl_set_rebuild_rate": {
+        "label": "Rebuild Rate",
+        "icon": "⚙️",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Установить Rebuild Rate = {rate}% на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl} set rebuildrate={rate}",
+    },
+    "ctrl_set_cc_rate": {
+        "label": "CC Rate",
+        "icon": "⚙️",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Установить CC Rate = {rate}% на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl} set ccrate={rate}",
+    },
+    "ctrl_set_patrol_rate": {
+        "label": "Patrol Read Rate",
+        "icon": "⚙️",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Установить Patrol Read Rate = {rate}% на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl} set patrolreadrate={rate}",
+    },
+    "ctrl_set_bgi_rate": {
+        "label": "BGI Rate",
+        "icon": "⚙️",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Установить BGI Rate = {rate}% на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl} set bgirate={rate}",
+    },
+    "ctrl_set_alarm_on": {
+        "label": "Включить Alarm",
+        "icon": "🔊",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Включить звуковой сигнал на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl} set alarm=on",
+    },
     "ctrl_silence_alarm": {
         "label": "Выключить Alarm",
         "icon": "🔇",
@@ -136,6 +208,74 @@ COMMAND_REGISTRY: dict[str, dict[str, Any]] = {
         "confirm_text": "Выключить звуковой сигнал на контроллере C{ctrl}?",
         "template": "{path} /c{ctrl} set alarm=silence",
     },
+    "ctrl_set_alarm_off": {
+        "label": "Отключить Alarm полностью",
+        "icon": "🔕",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Полностью отключить поддержку Alarm на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl} set alarm=off",
+    },
+    "ctrl_set_cache_wb": {
+        "label": "Кэш WB",
+        "icon": "💾",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Установить Cachecade Write Back на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl} set cachecade writeback",
+    },
+    "ctrl_set_cache_wt": {
+        "label": "Кэш WT",
+        "icon": "💾",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Установить Cachecade Write Through на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl} set cachecade writethrough",
+    },
+
+    # ── PD: опасные ──
+    "pd_make_good": {
+        "label": "Make Good",
+        "icon": "🛠️",
+        "target": "pd",
+        "level": "dangerous",
+        "confirm_text": "Принудительно перевести диск {eid}:{slot} в состояние Unconfigured Good?",
+        "template": "{path} /c{ctrl}/e{eid}/s{slot} set good force",
+    },
+    "pd_make_offline": {
+        "label": "Force Offline",
+        "icon": "🔌",
+        "target": "pd",
+        "level": "dangerous",
+        "confirm_text": "Принудительно перевести диск {eid}:{slot} в Offline? Это может разрушить массив!",
+        "template": "{path} /c{ctrl}/e{eid}/s{slot} set offline",
+    },
+    "pd_make_online": {
+        "label": "Force Online",
+        "icon": "🔌",
+        "target": "pd",
+        "level": "dangerous",
+        "confirm_text": "Принудительно перевести диск {eid}:{slot} в Online? Это может разрушить массив если данные не синхронизированы!",
+        "template": "{path} /c{ctrl}/e{eid}/s{slot} set online",
+    },
+
+    # ── Controller: опасные ──
+    "ctrl_foreign_import": {
+        "label": "Импорт Foreign",
+        "icon": "📥",
+        "target": "controller",
+        "level": "dangerous",
+        "confirm_text": "Импортировать чужую (Foreign) конфигурацию на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl}/fall import",
+    },
+    "ctrl_foreign_clear": {
+        "label": "Очистить Foreign",
+        "icon": "🗑️",
+        "target": "controller",
+        "level": "dangerous",
+        "confirm_text": "УДАЛИТЬ чужую (Foreign) конфигурацию на контроллере C{ctrl}? Данные на этих дисках могут быть потеряны!",
+        "template": "{path} /c{ctrl}/fall delete",
+    }
 }
 
 
@@ -169,6 +309,7 @@ def build_command(
     slot: str | None = None,
     vd_index: int | None = None,
     dg: int | None = None,
+    rate: str = "",
 ) -> str:
     """
     Собирает финальную storcli-команду из шаблона.
@@ -202,6 +343,7 @@ def build_command(
             slot=slot or "",
             vd=vd_index if vd_index is not None else "",
             dg=dg if dg is not None else "",
+            rate=rate or "",
         )
     except KeyError as exc:
         raise ValueError(f"Не хватает параметра для команды '{action}': {exc}") from exc

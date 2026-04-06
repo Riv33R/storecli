@@ -124,6 +124,56 @@
         </div>
     </div>
 
+    <!-- ── Modal: Dangerous Подтверждение ────────── -->
+    <div id="dangerous-modal" class="modal-overlay">
+        <div class="modal-content modal-sm">
+            <div class="modal-header" style="border-bottom-color: rgba(239, 68, 68, 0.3);">
+                <h2 class="modal-title" style="color: var(--status-critical); background: none; -webkit-text-fill-color: initial;">⚠️ Опасная операция</h2>
+                <button class="modal-close" onclick="closeDangerousModal()">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <p class="confirm-text" id="dangerous-confirm-text" style="color: var(--status-critical); font-weight: bold;"></p>
+                <div class="confirm-meta" style="margin-bottom: 16px;">
+                    <span class="confirm-host" id="dangerous-confirm-host"></span>
+                    <span class="confirm-action" id="dangerous-confirm-action"></span>
+                </div>
+                <div class="form-group full">
+                    <label for="dangerous-confirm-input" style="color: var(--status-critical);">Введите подтверждение</label>
+                    <input type="text" id="dangerous-confirm-input" autocomplete="off" style="border-color: rgba(239, 68, 68, 0.5);">
+                </div>
+            </div>
+            <div class="form-actions" style="border-top-color: rgba(239, 68, 68, 0.3);">
+                <button type="button" class="btn" onclick="closeDangerousModal()">Отмена</button>
+                <button type="button" class="btn" style="background: var(--status-critical); color: white; border-color: transparent;" id="dangerous-confirm-btn" onclick="executeDangerousAction()">
+                    Выполнить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Modal: Ввод Rate ────────── -->
+    <div id="rate-modal" class="modal-overlay">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2 class="modal-title">⚙️ Изменение Rate</h2>
+                <button class="modal-close" onclick="closeRateModal()">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <p class="confirm-text" id="rate-confirm-text"></p>
+                <div class="form-group full" style="margin-top: 16px;">
+                    <label for="rate-input">Значение (0-100)</label>
+                    <input type="number" id="rate-input" min="0" max="100" value="30">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" onclick="closeRateModal()">Отмена</button>
+                <button type="button" class="btn btn-warning" onclick="executeRateAction()">
+                    Применить
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ── Modal: Результат выполнения ─────────── -->
     <div id="result-modal" class="modal-overlay">
         <div class="modal-content">

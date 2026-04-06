@@ -253,14 +253,41 @@ function triggerAction(action, controllerIndex, opts = {}) {
     delete actionData._confirm;
     delete actionData._label;
 
-    if (level === 'operational') {
-        // Показываем модалку подтверждения
+    if (level === 'dangerous') {
+        // Показываем модалку опасного подтверждения
         pendingAction = actionData;
-        document.getElementById('confirm-text').textContent = confirmText;
+        document.getElementById('dangerous-confirm-text').textContent = confirmText;
         const hostObj = hosts.find(h => h.id === activeHostId);
-        document.getElementById('confirm-host').textContent = `Сервер: ${hostObj ? hostObj.name : activeHostId}`;
-        document.getElementById('confirm-action').textContent = `Действие: ${label}`;
-        document.getElementById('confirm-modal').classList.add('active');
+        document.getElementById('dangerous-confirm-host').textContent = `Сервер: ${hostObj ? hostObj.name : activeHostId}`;
+        document.getElementById('dangerous-confirm-action').textContent = `Действие: ${label}`;
+        
+        const input = document.getElementById('dangerous-confirm-input');
+        input.value = '';
+        input.placeholder = `Введите для подтверждения: ${label}`;
+        
+        const btn = document.getElementById('dangerous-confirm-btn');
+        btn.disabled = true;
+        input.oninput = () => {
+            btn.disabled = (input.value !== label);
+        };
+
+        document.getElementById('dangerous-modal').classList.add('active');
+
+    } else if (level === 'operational') {
+        if (opts._needsRate) {
+            pendingAction = actionData;
+            document.getElementById('rate-confirm-text').textContent = confirmText;
+            document.getElementById('rate-input').value = '30';
+            document.getElementById('rate-modal').classList.add('active');
+        } else {
+            // Показываем модалку обычного подтверждения
+            pendingAction = actionData;
+            document.getElementById('confirm-text').textContent = confirmText;
+            const hostObj = hosts.find(h => h.id === activeHostId);
+            document.getElementById('confirm-host').textContent = `Сервер: ${hostObj ? hostObj.name : activeHostId}`;
+            document.getElementById('confirm-action').textContent = `Действие: ${label}`;
+            document.getElementById('confirm-modal').classList.add('active');
+        }
     } else {
         // Safe — сразу выполняем
         executeAction(actionData);
@@ -276,6 +303,33 @@ function executeConfirmedAction() {
     if (pendingAction) {
         const action = { ...pendingAction };
         closeConfirmModal();
+        executeAction(action);
+    }
+}
+
+function closeDangerousModal() {
+    document.getElementById('dangerous-modal').classList.remove('active');
+    pendingAction = null;
+}
+
+function executeDangerousAction() {
+    if (pendingAction) {
+        const action = { ...pendingAction };
+        closeDangerousModal();
+        executeAction(action);
+    }
+}
+
+function closeRateModal() {
+    document.getElementById('rate-modal').classList.remove('active');
+    pendingAction = null;
+}
+
+function executeRateAction() {
+    if (pendingAction) {
+        const action = { ...pendingAction };
+        action.rate = document.getElementById('rate-input').value || "30";
+        closeRateModal();
         executeAction(action);
     }
 }
@@ -389,6 +443,8 @@ function renderControllerBlock(ctrl, index, total) {
             <div class="stat-card"><div class="stat-label">S/N</div><div class="stat-value small">${esc(c.serial_number)}</div></div>
             <div class="stat-card"><div class="stat-label">Статус</div><div class="stat-value small">${badge(c.status, st)}</div></div>
             <div class="stat-card"><div class="stat-label">Прошивка</div><div class="stat-value small">${esc(c.firmware_version)}</div></div>
+            <div class="stat-card"><div class="stat-label">BIOS / Драйвер</div><div class="stat-value small">${esc(c.bios_version)} / ${esc(c.driver_name)}</div></div>
+            <div class="stat-card"><div class="stat-label">Время контроллера</div><div class="stat-value small" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.controller_time)}</div></div>
             <div class="stat-card"><div class="stat-label">Память / Кэш</div><div class="stat-value small">${esc(c.memory_size)} / ${c.cache_size_mb} MB</div></div>
             <div class="stat-card"><div class="stat-label">VD / PD</div><div class="stat-value">${ctrl.virtual_drives.length} / ${ctrl.physical_drives.length}</div></div>
         </div>`;
@@ -396,11 +452,79 @@ function renderControllerBlock(ctrl, index, total) {
     // Кнопки управления контроллером
     const ctrlActions = `
         <div class="ctrl-actions">
+            <button class="action-btn" onclick="triggerAction('ctrl_show_all', ${ci}, {_level:'safe', _label:'Полная инфо'})" title="Full Info">ℹ️ Полная инфо</button>
             <button class="action-btn" onclick="triggerAction('ctrl_event_log', ${ci}, {_level:'safe', _label:'Event Log'})" title="Event Log">📋 Event Log</button>
             <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_start_patrol', ${ci}, {_level:'operational', _confirm:'Запустить Patrol Read на C${ci}?', _label:'Start Patrol Read'})" title="Patrol Read">🔍 Patrol Read</button>
             <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_stop_patrol', ${ci}, {_level:'operational', _confirm:'Остановить Patrol Read на C${ci}?', _label:'Stop Patrol Read'})" title="Stop Patrol">⏹️ Stop Patrol</button>
             <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_silence_alarm', ${ci}, {_level:'operational', _confirm:'Выключить сигнал на C${ci}?', _label:'Silence Alarm'})" title="Silence Alarm">🔇 Silence Alarm</button>
+            <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_set_alarm_off', ${ci}, {_level:'operational', _confirm:'Отключить поддержку Alarm на C${ci}?', _label:'Disable Alarm'})" title="Disable Alarm">🔕 Disable Alarm</button>
+            <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_set_alarm_on', ${ci}, {_level:'operational', _confirm:'Включить поддержку Alarm на C${ci}?', _label:'Enable Alarm'})" title="Enable Alarm">🔊 Enable Alarm</button>
+            <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_set_cache_wb', ${ci}, {_level:'operational', _confirm:'Установить Cache Write Back на C${ci}?', _label:'Cache WB'})" title="Cache WB">💾 Cache WB</button>
+            <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_set_cache_wt', ${ci}, {_level:'operational', _confirm:'Установить Cache Write Through на C${ci}?', _label:'Cache WT'})" title="Cache WT">💾 Cache WT</button>
+            <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_start_cc', ${ci}, {_level:'operational', _confirm:'Запустить CC для ВСЕХ VD на C${ci}?', _label:'Start All CC'})" title="Start All CC">✅ Start All CC</button>
+            <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_stop_cc', ${ci}, {_level:'operational', _confirm:'Остановить CC для ВСЕХ VD на C${ci}?', _label:'Stop All CC'})" title="Stop All CC">⏹️ Stop All CC</button>
+            <div style="flex-basis: 100%; height: 0;"></div>
+            <span style="font-size:0.8rem; color:var(--text-secondary); margin-top:4px; margin-right:8px; line-height:30px;">Foreign:</span>
+            <button class="action-btn" onclick="triggerAction('ctrl_foreign_scan', ${ci}, {_level:'safe', _label:'Scan Foreign'})" title="Scan Foreign">🔍 Scan Config</button>
+            <button class="action-btn btn-danger" style="color:var(--status-critical); border-color:var(--status-critical-border);" onclick="triggerAction('ctrl_foreign_import', ${ci}, {_level:'dangerous', _confirm:'Импортировать чужую конфигурацию на C${ci}?', _label:'Import Foreign'})" title="Import Foreign">📥 Import Foreign</button>
+            <button class="action-btn btn-danger" style="color:var(--status-critical); border-color:var(--status-critical-border);" onclick="triggerAction('ctrl_foreign_clear', ${ci}, {_level:'dangerous', _confirm:'УДАЛИТЬ чужую конфигурацию на C${ci}? Данные на дисках могут быть потеряны!', _label:'Clear Foreign'})" title="Clear Foreign">🗑️ Clear Foreign</button>
         </div>`;
+
+    // Controller settings (rates and tasks)
+    const policies = ctrl.policies || {};
+    const tasks = ctrl.tasks || {};
+    const settingsHTML = `
+    <div class="section"><div class="section-card">
+        <div class="section-header" onclick="toggleSection('${pfx}-settings')">
+            <div class="section-header-left"><span class="section-icon">⚙️</span><span class="section-title">Controller Settings</span></div>
+            <span class="section-toggle" id="toggle-${pfx}-settings">▼</span>
+        </div>
+        <div class="section-body" id="body-${pfx}-settings">
+            <div style="padding:16px;">
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Rebuild Rate</div>
+                            <div class="setting-desc">Текущее: ${esc(policies['Rebuild Rate']||'N/A')}</div>
+                        </div>
+                        <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_set_rebuild_rate', ${ci}, {_level:'operational', _needsRate:true, _confirm:'Установить Rebuild Rate на C${ci}:', _label:'Set Rebuild Rate'})">Изменить</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">CC Rate</div>
+                            <div class="setting-desc">Текущее: ${esc(policies['Check Consistency Rate']||'N/A')}</div>
+                        </div>
+                        <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_set_cc_rate', ${ci}, {_level:'operational', _needsRate:true, _confirm:'Установить CC Rate на C${ci}:', _label:'Set CC Rate'})">Изменить</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Patrol Read Rate</div>
+                            <div class="setting-desc">Текущее: ${esc(policies['PR Rate']||'N/A')}</div>
+                        </div>
+                        <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_set_patrol_rate', ${ci}, {_level:'operational', _needsRate:true, _confirm:'Установить Patrol Read Rate на C${ci}:', _label:'Set PR Rate'})">Изменить</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">BGI Rate</div>
+                            <div class="setting-desc">Текущее: ${esc(policies['BGI Rate']||'N/A')}</div>
+                        </div>
+                        <button class="action-btn action-btn-warn" onclick="triggerAction('ctrl_set_bgi_rate', ${ci}, {_level:'operational', _needsRate:true, _confirm:'Установить BGI Rate на C${ci}:', _label:'Set BGI Rate'})">Изменить</button>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:0 16px 16px;">
+                <table class="data-table">
+                    <thead><tr><th>Scheduled Tasks</th><th>Next Launch Time</th></tr></thead>
+                    <tbody>
+                        <tr><td>Patrol Read</td><td>${esc(tasks['Next Patrol Read'])}</td></tr>
+                        <tr><td>Consistency Check</td><td>${esc(tasks['Next CC'])}</td></tr>
+                        <tr><td>Battery Learn</td><td>${esc(tasks['Battery Learn'])}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div></div>
+    `;
 
     // VD с кнопками действий
     const vd = tblSection(pfx+'-vd', '💿', 'Virtual Drives', ctrl.virtual_drives,
@@ -431,6 +555,10 @@ function renderControllerBlock(ctrl, index, total) {
                     <button class="action-btn-sm" onclick="triggerAction('pd_smart',${ci},{eid:'${eid}',slot:'${slot}',_level:'safe',_label:'SMART'})" title="SMART">📊</button>
                     ${!isHotSpare ? `<button class="action-btn-sm action-btn-warn" onclick="triggerAction('pd_add_hotspare_global',${ci},{eid:'${eid}',slot:'${slot}',_level:'operational',_confirm:'Назначить ${p.eid_slot} Global HS?',_label:'Global HS'})" title="Global HS">♨️</button>` : ''}
                     ${isHotSpare ? `<button class="action-btn-sm action-btn-warn" onclick="triggerAction('pd_remove_hotspare',${ci},{eid:'${eid}',slot:'${slot}',_level:'operational',_confirm:'Убрать HS с ${p.eid_slot}?',_label:'Remove HS'})" title="Remove HS">❌</button>` : ''}
+                    <button class="action-btn-sm action-btn-warn" onclick="triggerAction('pd_start_rebuild',${ci},{eid:'${eid}',slot:'${slot}',_level:'operational',_confirm:'Запустить Rebuild на ${p.eid_slot}?',_label:'Rebuild'})" title="Rebuild">🔄</button>
+                    <button class="action-btn-sm" style="color:var(--status-critical); border-color:var(--status-critical-border);" onclick="triggerAction('pd_make_offline',${ci},{eid:'${eid}',slot:'${slot}',_level:'dangerous',_confirm:'Сделать ${p.eid_slot} OFFLINE? Опасная операция!',_label:'Offline'})" title="Force Offline">🔌</button>
+                    <button class="action-btn-sm" style="color:var(--status-critical); border-color:var(--status-critical-border);" onclick="triggerAction('pd_make_online',${ci},{eid:'${eid}',slot:'${slot}',_level:'dangerous',_confirm:'Сделать ${p.eid_slot} ONLINE? Опасная операция!',_label:'Online'})" title="Force Online">⚡</button>
+                    <button class="action-btn-sm" style="color:var(--status-critical); border-color:var(--status-critical-border);" onclick="triggerAction('pd_make_good',${ci},{eid:'${eid}',slot:'${slot}',_level:'dangerous',_confirm:'Сделать ${p.eid_slot} Unconfigured Good?',_label:'Make Good'})" title="Make Good">🛠️</button>
                 </div>
             </td>`;
         });
@@ -444,7 +572,7 @@ function renderControllerBlock(ctrl, index, total) {
         b => `<td>${esc(b.model)}</td><td>${badge(b.state,b.health)}</td><td>${esc(b.retention_time)}</td><td>${esc(b.temperature)}</td><td>${esc(b.mfg_date)}</td><td>${esc(b.next_learn)}</td>`,
         'BBU не обнаружен');
 
-    block.innerHTML = header + err + cards + ctrlActions + vd + pd + topo + bbu;
+    block.innerHTML = header + err + cards + ctrlActions + settingsHTML + vd + pd + topo + bbu;
     return block;
 }
 
@@ -524,16 +652,18 @@ async function logout() {
 document.addEventListener('DOMContentLoaded', () => {
     loadHosts();
     // Закрытие модалок
-    ['host-modal','confirm-modal','result-modal'].forEach(id => {
-        document.getElementById(id).addEventListener('click', e => {
+    ['host-modal','confirm-modal','result-modal','dangerous-modal','rate-modal'].forEach(id => {
+        document.getElementById(id)?.addEventListener('click', e => {
             if (e.target.id === id) {
                 if (id === 'host-modal') closeModal();
                 else if (id === 'confirm-modal') closeConfirmModal();
+                else if (id === 'dangerous-modal') closeDangerousModal();
+                else if (id === 'rate-modal') closeRateModal();
                 else closeResultModal();
             }
         });
     });
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeModal(); closeConfirmModal(); closeResultModal(); }
+        if (e.key === 'Escape') { closeModal(); closeConfirmModal(); closeDangerousModal(); closeRateModal(); closeResultModal(); }
     });
 });
