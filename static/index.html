@@ -174,6 +174,80 @@
         </div>
     </div>
 
+    <!-- ── Modal: Создать RAID ────────── -->
+    <div id="create-raid-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">➕ Создать RAID</h2>
+                <button class="modal-close" onclick="closeCreateRaidModal()">&times;</button>
+            </div>
+            <form id="create-raid-form" onsubmit="return submitCreateRaid(event)">
+                <input type="hidden" id="form-raid-ci" value="">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label for="form-raid-level">Уровень RAID *</label>
+                        <select id="form-raid-level" required>
+                            <option value="raid0">RAID 0</option>
+                            <option value="raid1">RAID 1</option>
+                            <option value="raid5">RAID 5</option>
+                            <option value="raid6">RAID 6</option>
+                            <option value="raid10">RAID 10</option>
+                        </select>
+                    </div>
+                    <div class="form-group full">
+                        <label>Доступные диски (Unconfigured Good) *</label>
+                        <div id="form-raid-drives-container" class="checkbox-group" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background: rgba(0,0,0,0.2);">
+                            <!-- Чекбоксы дисков будут добавлены динамически -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-raid-name">Имя (необязательно)</label>
+                        <input type="text" id="form-raid-name" placeholder="Например: Data">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-raid-strip">Strip Size</label>
+                        <select id="form-raid-strip">
+                            <option value="">Auto</option>
+                            <option value="64">64 KB</option>
+                            <option value="128">128 KB</option>
+                            <option value="256">256 KB</option>
+                            <option value="512">512 KB</option>
+                            <option value="1024">1024 KB</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-raid-opt-write">Write Policy</label>
+                        <select id="form-raid-opt-write">
+                            <option value="WB" selected>Write Back (WB)</option>
+                            <option value="WT">Write Through (WT)</option>
+                            <option value="AWB">Always Write Back</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-raid-opt-read">Read Policy</label>
+                        <select id="form-raid-opt-read">
+                            <option value="RA" selected>Read Ahead (RA)</option>
+                            <option value="NORA">No Read Ahead (NORA)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-raid-opt-io">IO Policy</label>
+                        <select id="form-raid-opt-io">
+                            <option value="Direct" selected>Direct</option>
+                            <option value="Cached">Cached</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 16px;">
+                    <button type="button" class="btn" onclick="closeCreateRaidModal()">Отмена</button>
+                    <button type="submit" class="btn btn-warning" id="form-raid-submit-btn">
+                        Создать
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ── Modal: Результат выполнения ─────────── -->
     <div id="result-modal" class="modal-overlay">
         <div class="modal-content">

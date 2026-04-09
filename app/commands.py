@@ -100,6 +100,14 @@ COMMAND_REGISTRY: dict[str, dict[str, Any]] = {
         "confirm_text": "Остановить Consistency Check на VD {vd}?",
         "template": "{path} /c{ctrl}/v{vd} stop cc",
     },
+    "vd_delete": {
+        "label": "Удалить VD",
+        "icon": "🗑️",
+        "target": "vd",
+        "level": "dangerous",
+        "confirm_text": "УДАЛИТЬ виртуальный диск VD {vd}? Все данные на нем будут безвозвратно утеряны!",
+        "template": "{path} /c{ctrl}/v{vd} del force",
+    },
 
     # ── Controller: безопасные ──
     "ctrl_show_all": {
@@ -232,6 +240,14 @@ COMMAND_REGISTRY: dict[str, dict[str, Any]] = {
         "confirm_text": "Установить Cachecade Write Through на контроллере C{ctrl}?",
         "template": "{path} /c{ctrl} set cachecade writethrough",
     },
+    "ctrl_add_vd": {
+        "label": "Создать RAID",
+        "icon": "➕",
+        "target": "controller",
+        "level": "operational",
+        "confirm_text": "Создать RAID из выбранных дисков на контроллере C{ctrl}?",
+        "template": "{path} /c{ctrl} add vd type={raid_level} drives={drives} {options}",
+    },
 
     # ── PD: опасные ──
     "pd_make_good": {
@@ -310,6 +326,9 @@ def build_command(
     vd_index: int | None = None,
     dg: int | None = None,
     rate: str = "",
+    raid_level: str = "",
+    drives: str = "",
+    options: str = "",
 ) -> str:
     """
     Собирает финальную storcli-команду из шаблона.
@@ -322,6 +341,10 @@ def build_command(
         slot: Slot номер (для PD-действий).
         vd_index: Индекс VD (для VD-действий).
         dg: Drive Group (для dedicated hot spare).
+        rate: Rate значение.
+        raid_level: Уровень RAID (для add vd).
+        drives: Диски (для add vd).
+        options: Дополнительные опции (для add vd).
 
     Returns:
         Готовая к выполнению команда.
@@ -336,6 +359,7 @@ def build_command(
     template = cmd["template"]
 
     try:
+        # Убираем лишние пробелы в options, если есть
         result = template.format(
             path=storcli_path,
             ctrl=controller_index,
@@ -344,7 +368,10 @@ def build_command(
             vd=vd_index if vd_index is not None else "",
             dg=dg if dg is not None else "",
             rate=rate or "",
-        )
+            raid_level=raid_level or "",
+            drives=drives or "",
+            options=(options or "").strip(),
+        ).strip()
     except KeyError as exc:
         raise ValueError(f"Не хватает параметра для команды '{action}': {exc}") from exc
 

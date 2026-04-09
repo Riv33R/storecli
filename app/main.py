@@ -328,6 +328,9 @@ async def execute_action(host_id: str, request: Request):
             vd_index=payload.get("vd_index"),
             dg=payload.get("dg"),
             rate=str(payload.get("rate", "")),
+            raid_level=str(payload.get("raid_level", "")),
+            drives=str(payload.get("drives", "")),
+            options=str(payload.get("options", "")),
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail={"error": "BUILD_ERROR", "message": str(exc)})

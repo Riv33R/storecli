@@ -15,6 +15,7 @@ let isLoading = false;
 let hosts = [];
 let activeHostId = null;
 let pendingAction = null; // Для модалки подтверждения
+let currentRaidData = null;
 
 // ────────────────────────────────────────────────────────
 // Утилиты
@@ -394,6 +395,86 @@ function closeResultModal() {
 }
 
 // ────────────────────────────────────────────────────────
+// Modal: Создать RAID
+// ────────────────────────────────────────────────────────
+function openCreateRaidModal(ci) {
+    if (!currentRaidData || !currentRaidData.controllers) return;
+    const ctrl = currentRaidData.controllers.find(c => c.controller_index === ci);
+    if (!ctrl) return;
+
+    document.getElementById('form-raid-ci').value = ci;
+    const container = document.getElementById('form-raid-drives-container');
+    container.innerHTML = '';
+    
+    // Находим UGood диски
+    const ugoodDrives = (ctrl.physical_drives || []).filter(p => {
+        const state = String(p.state).toLowerCase();
+        return state === 'ugood' || state.includes('unconfigured good');
+    });
+
+    if (ugoodDrives.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted);font-style:italic;">Свободных дисков (UGood) не найдено на этом контроллере.</div>';
+    } else {
+        ugoodDrives.forEach(p => {
+            const {eid, slot} = parseEidSlot(p.eid_slot);
+            const size = p.size;
+            const el = document.createElement('div');
+            el.innerHTML = `<label style="display:flex; align-items:center; cursor:pointer;">
+                <input type="checkbox" name="raid-drive" value="${eid}:${slot}" style="margin-right:8px;">
+                ${p.eid_slot} - ${size} (${p.media})
+            </label>`;
+            container.appendChild(el);
+        });
+    }
+
+    document.getElementById('create-raid-form').reset();
+    document.getElementById('form-raid-opt-write').value = 'WB';
+    document.getElementById('form-raid-opt-read').value = 'RA';
+    document.getElementById('form-raid-opt-io').value = 'Direct';
+
+    document.getElementById('create-raid-modal').classList.add('active');
+}
+
+function closeCreateRaidModal() {
+    document.getElementById('create-raid-modal').classList.remove('active');
+}
+
+function submitCreateRaid(event) {
+    event.preventDefault();
+    const ci = parseInt(document.getElementById('form-raid-ci').value);
+    const cb = document.querySelectorAll('input[name="raid-drive"]:checked');
+    if (cb.length === 0) {
+        alert('Выберите хотя бы один диск!');
+        return false;
+    }
+
+    const drives = Array.from(cb).map(c => c.value).join(',');
+    const level = document.getElementById('form-raid-level').value;
+    const name = document.getElementById('form-raid-name').value.trim();
+    const strip = document.getElementById('form-raid-strip').value;
+    const wp = document.getElementById('form-raid-opt-write').value;
+    const rp = document.getElementById('form-raid-opt-read').value;
+    const io = document.getElementById('form-raid-opt-io').value;
+
+    let options = `${wp} ${rp} ${io}`;
+    if (strip) options += ` strip=${strip}`;
+    if (name) options += ` name="${name}"`;
+
+    closeCreateRaidModal();
+
+    triggerAction('ctrl_add_vd', ci, {
+        raid_level: level,
+        drives: drives,
+        options: options,
+        _level: 'operational',
+        _confirm: `Создать массив ${level} из дисков ${drives}?`,
+        _label: `Создать RAID ${level}`
+    });
+
+    return false;
+}
+
+// ────────────────────────────────────────────────────────
 // Рендеринг дашборда
 // ────────────────────────────────────────────────────────
 
@@ -527,6 +608,12 @@ function renderControllerBlock(ctrl, index, total) {
     `;
 
     // VD с кнопками действий
+    const vdActions = `<div style="padding: 0 16px 10px; display: flex; justify-content: flex-end;">
+        <button class="btn btn-primary" onclick="openCreateRaidModal(${ci})" style="box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <span class="icon" style="transform:none !important;">➕</span> Создать массив (RAID)
+        </button>
+    </div>`;
+
     const vd = tblSection(pfx+'-vd', '💿', 'Virtual Drives', ctrl.virtual_drives,
         ['DG/VD','RAID','State','Size','Access','Cache','Consist','Name','Действия'],
         v => {
@@ -536,6 +623,7 @@ function renderControllerBlock(ctrl, index, total) {
                 <div class="action-group">
                     <button class="action-btn-sm action-btn-warn" onclick="triggerAction('vd_start_cc',${ci},{vd_index:${vdx},_level:'operational',_confirm:'Запустить CC на VD ${v.dg_vd}?',_label:'Start CC'})" title="Start CC">✅</button>
                     <button class="action-btn-sm action-btn-warn" onclick="triggerAction('vd_stop_cc',${ci},{vd_index:${vdx},_level:'operational',_confirm:'Остановить CC на VD ${v.dg_vd}?',_label:'Stop CC'})" title="Stop CC">⏹️</button>
+                    <button class="action-btn-sm" style="color:var(--status-critical); border-color:var(--status-critical-border);" onclick="triggerAction('vd_delete',${ci},{vd_index:${vdx},_level:'dangerous',_confirm:'УДАЛИТЬ виртуальный диск VD ${v.dg_vd}? Все данные будут безвозвратно утеряны!',_label:'Delete VD'})" title="Delete VD">🗑️</button>
                 </div>
             </td>`;
         });
@@ -572,7 +660,7 @@ function renderControllerBlock(ctrl, index, total) {
         b => `<td>${esc(b.model)}</td><td>${badge(b.state,b.health)}</td><td>${esc(b.retention_time)}</td><td>${esc(b.temperature)}</td><td>${esc(b.mfg_date)}</td><td>${esc(b.next_learn)}</td>`,
         'BBU не обнаружен');
 
-    block.innerHTML = header + err + cards + ctrlActions + settingsHTML + vd + pd + topo + bbu;
+    block.innerHTML = header + err + cards + ctrlActions + settingsHTML + vdActions + vd + pd + topo + bbu;
     return block;
 }
 
@@ -630,7 +718,10 @@ async function fetchRaidStatus(hostId) {
             return;
         }
         const res = await r.json();
-        if (res.success && res.data) renderDashboard(res.data);
+        if (res.success && res.data) {
+            currentRaidData = res.data;
+            renderDashboard(res.data);
+        }
         else showError('Ошибка', 'Неожиданная структура ответа');
     } catch (e) { showError('Ошибка сети', `Бэкенд недоступен: ${e.message}`); }
     finally { hideLoader(); isLoading = false; }
@@ -652,18 +743,19 @@ async function logout() {
 document.addEventListener('DOMContentLoaded', () => {
     loadHosts();
     // Закрытие модалок
-    ['host-modal','confirm-modal','result-modal','dangerous-modal','rate-modal'].forEach(id => {
+    ['host-modal','confirm-modal','result-modal','dangerous-modal','rate-modal','create-raid-modal'].forEach(id => {
         document.getElementById(id)?.addEventListener('click', e => {
             if (e.target.id === id) {
                 if (id === 'host-modal') closeModal();
                 else if (id === 'confirm-modal') closeConfirmModal();
                 else if (id === 'dangerous-modal') closeDangerousModal();
                 else if (id === 'rate-modal') closeRateModal();
+                else if (id === 'create-raid-modal') closeCreateRaidModal();
                 else closeResultModal();
             }
         });
     });
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeModal(); closeConfirmModal(); closeDangerousModal(); closeRateModal(); closeResultModal(); }
+        if (e.key === 'Escape') { closeModal(); closeConfirmModal(); closeDangerousModal(); closeRateModal(); closeResultModal(); closeCreateRaidModal(); }
     });
 });
